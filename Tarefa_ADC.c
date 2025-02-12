@@ -10,8 +10,8 @@
 #define LED_PIN_RED 13
 #define LED_PIN_BLUE 12
 #define LED_PIN_GREEN 11
-#define JOYSTICK_X 26
-#define JOYSTICK_Y 27
+#define JOYSTICK_X 27
+#define JOYSTICK_Y 26
 #define BTN_JOYSTICK 22
 #define BTN_A 5
 #define I2C_PORT i2c1
@@ -91,8 +91,13 @@ void atualizar_borda_display(ssd1306_t *ssd, bool estilo) {
 }
 
 int map_adc_to_screen(int value, int min_val, int max_val, int screen_max) {
-    // Inverte o mapeamento para corrigir a direção
-    value = max_val - value;
+    // Para o eixo X, a inversão já foi corrigida
+    // value = max_val - value;  // Comentada ou removida
+    
+    // Para o eixo Y, adicionamos a inversão
+    if (screen_max == HEIGHT) {
+        value = max_val - value;  // Inversão para corrigir o movimento de cima e baixo
+    }
     
     // Define o centro e a faixa de movimento
     int center_screen = screen_max / 2 - QUADRADO / 2;
@@ -257,29 +262,3 @@ int main() {
         sleep_ms(10);
     }
 }
-
-
-
-
-
-
-
-
-/*Controlar a intensidade luminosa dos LEDs RGB, onde:
-• O LED Azul terá seu brilho ajustado conforme o valor do eixo Y. Quando o joystick estiver solto 
-(posição central - valor 2048), o LED permanecerá apagado. À medida que o joystick for movido para 
-cima (valores menores) ou para baixo (valores maiores), o LED aumentará seu brilho gradualmente, 
-atingindo a intensidade máxima nos extremos (0 e 4095).
-• O LED Vermelho seguirá o mesmo princípio, mas de acordo com o eixo X. Quando o joystick estiver 
-solto (posição central - valor 2048), o LED estará apagado. Movendo o joystick para a esquerda 
-(valores menores) ou para a direita (valores maiores), o LED aumentará de brilho, sendo mais intenso 
-nos extremos (0 e 4095).
-• Os LEDs serão controlados via PWM para permitir variação suave da intensidade luminosa.
-Exibir no display SSD1306 um quadrado de 8x8 pixels, inicialmente centralizado, que se moverá 
-proporcionalmente aos valores capturados pelo joystick.
-Adicionalmente, o botão do joystick terá as seguintes funcionalidades:
-• Alternar o estado do LED Verde a cada acionamento.
-• Modificar a borda do display para indicar quando foi pressionado, alternando entre diferentes estilos 
-de borda a cada novo acionamento.
-Finalmente, o botão A terá a seguinte funcionalidade:
-• Ativar ou desativar os LED PWM a cada acionamento*/

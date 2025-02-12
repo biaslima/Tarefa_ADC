@@ -44,6 +44,7 @@
       "id": "joystick1",
       "top": -135,
       "left": 101.4,
+      "rotate": 90,
       "attrs": {}
     },
     {
@@ -90,8 +91,8 @@
     [ "pico:3V3", "joystick1:VCC", "magenta", [ "h29.11", "v19.2", "h38.4" ] ],
     [ "joystick1:GND", "pico:GND.5", "black", [ "v0" ] ],
     [ "joystick1:SEL", "pico:GP22", "gray", [ "v0" ] ],
-    [ "joystick1:HORZ", "pico:GP26", "gold", [ "v0" ] ],
-    [ "joystick1:VERT", "pico:GP27", "orange", [ "v0" ] ],
+    [ "joystick1:HORZ", "pico:GP27", "gold", [ "v0" ] ],
+    [ "joystick1:VERT", "pico:GP26", "orange", [ "v0" ] ],
     [ "oled1:SDA", "pico:GP14", "orange", [ "v0" ] ],
     [ "oled1:SCL", "pico:GP15", "magenta", [ "v-28.8", "h0.3" ] ],
     [ "vcc1:VCC", "oled1:VCC", "red", [ "h76.8", "v48" ] ],
