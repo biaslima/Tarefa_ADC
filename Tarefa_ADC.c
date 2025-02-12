@@ -10,8 +10,8 @@
 #define LED_PIN_RED 13
 #define LED_PIN_BLUE 12
 #define LED_PIN_GREEN 11
-#define JOYSTICK_X 27
-#define JOYSTICK_Y 26
+#define JOYSTICK_X 26
+#define JOYSTICK_Y 27
 #define BTN_JOYSTICK 22
 #define BTN_A 5
 #define I2C_PORT i2c1
@@ -91,12 +91,11 @@ void atualizar_borda_display(ssd1306_t *ssd, bool estilo) {
 }
 
 int map_adc_to_screen(int value, int min_val, int max_val, int screen_max) {
-    // Para o eixo X, a inversão já foi corrigida
-    // value = max_val - value;  // Comentada ou removida
     
-    // Para o eixo Y, adicionamos a inversão
+    // Para o eixo Y, a inversão é aplicada normalmente.
     if (screen_max == HEIGHT) {
-        value = max_val - value;  // Inversão para corrigir o movimento de cima e baixo
+        // Inversão no eixo Y
+        value = max_val - value;
     }
     
     // Define o centro e a faixa de movimento
@@ -114,6 +113,7 @@ int map_adc_to_screen(int value, int min_val, int max_val, int screen_max) {
     if (resultado > screen_max - QUADRADO) resultado = screen_max - QUADRADO;
     
     return resultado;
+
 }
 
 void setup_pwm(uint PWM_PIN) {
@@ -222,22 +222,22 @@ int main() {
         atualizar_borda_display(&ssd, estilo_borda);
         
         // Lê valores do joystick
-        adc_select_input(0);
-        uint16_t valor_x = adc_read();
         adc_select_input(1);
+        uint16_t valor_x = adc_read();
+        adc_select_input(0);
         uint16_t valor_y = adc_read();
         
-        // Atualiza posições alvo
+        // Atualizando as posições alvo, considerando a inversão dos eixos
         if (is_in_dead_zone(valor_x, joystick_cal.x_center, joystick_cal.dead_zone_x)) {
-            posicao_alvo_x = WIDTH / 2 - QUADRADO / 2;
+            posicao_alvo_x = WIDTH / 2 - QUADRADO / 2;  // Correção: mapeamento para X
         } else {
-            posicao_alvo_x = map_adc_to_screen(valor_x, 0, 4095, WIDTH);
+            posicao_alvo_x = map_adc_to_screen(valor_x, 0, 4095, WIDTH);  // Correção: mapeamento para X
         }
-        
+
         if (is_in_dead_zone(valor_y, joystick_cal.y_center, joystick_cal.dead_zone_y)) {
-            posicao_alvo_y = HEIGHT / 2 - QUADRADO / 2;
+            posicao_alvo_y = HEIGHT / 2 - QUADRADO / 2;  // Correção: mapeamento para Y
         } else {
-            posicao_alvo_y = map_adc_to_screen(valor_y, 0, 4095, HEIGHT);
+            posicao_alvo_y = map_adc_to_screen(valor_y, 0, 4095, HEIGHT);  // Correção: mapeamento para Y
         }
         
         // Atualiza posições atuais
@@ -250,10 +250,10 @@ int main() {
         
         // Atualiza LEDs se ativos
         if (leds_ativos) {
-            uint16_t pwm_x = converter_adc_pwm(valor_x, joystick_cal.x_center, joystick_cal.dead_zone_x);
-            uint16_t pwm_y = converter_adc_pwm(valor_y, joystick_cal.y_center, joystick_cal.dead_zone_y);
-            pwm_set_gpio_level(LED_PIN_RED, pwm_x);
-            pwm_set_gpio_level(LED_PIN_BLUE, pwm_y);
+            uint16_t pwm_x = converter_adc_pwm(valor_x, joystick_cal.x_center, joystick_cal.dead_zone_x);  // Corrigido para X
+            uint16_t pwm_y = converter_adc_pwm(valor_y, joystick_cal.y_center, joystick_cal.dead_zone_y);  // Corrigido para Y
+            pwm_set_gpio_level(LED_PIN_RED, pwm_x);  // PWM para o eixo X
+            pwm_set_gpio_level(LED_PIN_BLUE, pwm_y);  // PWM para o eixo Y
         } else {
             pwm_set_gpio_level(LED_PIN_RED, 0);
             pwm_set_gpio_level(LED_PIN_BLUE, 0);
