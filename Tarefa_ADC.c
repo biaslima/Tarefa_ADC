@@ -17,15 +17,11 @@
 #define I2C_PORT i2c1
 #define I2C_SDA 14
 #define I2C_SCL 15
-#define WIDTH 128
-#define HEIGHT 64
 #define QUADRADO 8
 #define ENDERECO 0x3C
 
 // Configurações de tempo e debounce
 #define DEBOUNCE_TIME 200000
-#define CALIBRATION_SAMPLES 100
-#define DEAD_ZONE_PERCENT 5
 
 // Variáveis globais
 static volatile uint32_t last_interrupt_time_joystick = 0;
@@ -41,15 +37,6 @@ static int posicao_atual_y;
 static int posicao_alvo_x;
 static int posicao_alvo_y;
 
-// Estrutura para calibração do joystick
-typedef struct {
-    int x_min, x_max, x_center;
-    int y_min, y_max, y_center;
-    int dead_zone_x, dead_zone_y;
-} joystick_calibration_t;
-
-static joystick_calibration_t joystick_cal;
-
 // Função para movimento suave
 int mover_suave(int atual, int alvo) {
     if (atual == alvo) return atual;
@@ -57,19 +44,6 @@ int mover_suave(int atual, int alvo) {
     // Move 30% da distância
     int diff = alvo - atual;
     return atual + (diff / 3);
-}
-
-// Função de calibração do joystick
-void calibrar_joystick(void) {
-    // Para o Wokwi, usamos valores fixos de calibração
-    joystick_cal.x_center = 2048;  // Centro do eixo X
-    joystick_cal.y_center = 2048;  // Centro do eixo Y
-    joystick_cal.dead_zone_x = 100;  // Zona morta reduzida
-    joystick_cal.dead_zone_y = 100;  // Zona morta reduzida
-    
-    printf("Calibração para Wokwi:\nX: center=%d, dead_zone=%d\nY: center=%d, dead_zone=%d\n",
-           joystick_cal.x_center, joystick_cal.dead_zone_x,
-           joystick_cal.y_center, joystick_cal.dead_zone_y);
 }
 
 bool is_in_dead_zone(int value, int center, int dead_zone) {
@@ -91,7 +65,6 @@ void atualizar_borda_display(ssd1306_t *ssd, bool estilo) {
 }
 
 int map_adc_to_screen(int value, int min_val, int max_val, int screen_max) {
-    
     // Para o eixo Y, a inversão é aplicada normalmente.
     if (screen_max == HEIGHT) {
         // Inversão no eixo Y
@@ -113,7 +86,6 @@ int map_adc_to_screen(int value, int min_val, int max_val, int screen_max) {
     if (resultado > screen_max - QUADRADO) resultado = screen_max - QUADRADO;
     
     return resultado;
-
 }
 
 void setup_pwm(uint PWM_PIN) {
@@ -175,10 +147,6 @@ int main() {
     adc_gpio_init(JOYSTICK_X);
     adc_gpio_init(JOYSTICK_Y);
     
-    // Calibra o joystick
-    printf("Iniciando calibração do joystick...\n");
-    calibrar_joystick();
-    
     // Inicializa PWM e GPIO
     setup_pwm(LED_PIN_RED);
     setup_pwm(LED_PIN_BLUE);
@@ -228,16 +196,16 @@ int main() {
         uint16_t valor_y = adc_read();
         
         // Atualizando as posições alvo, considerando a inversão dos eixos
-        if (is_in_dead_zone(valor_x, joystick_cal.x_center, joystick_cal.dead_zone_x)) {
-            posicao_alvo_x = WIDTH / 2 - QUADRADO / 2;  // Correção: mapeamento para X
+        if (is_in_dead_zone(valor_x, 2048, 100)) {
+            posicao_alvo_x = WIDTH / 2 - QUADRADO / 2;
         } else {
-            posicao_alvo_x = map_adc_to_screen(valor_x, 0, 4095, WIDTH);  // Correção: mapeamento para X
+            posicao_alvo_x = map_adc_to_screen(valor_x, 0, 4095, WIDTH);
         }
 
-        if (is_in_dead_zone(valor_y, joystick_cal.y_center, joystick_cal.dead_zone_y)) {
-            posicao_alvo_y = HEIGHT / 2 - QUADRADO / 2;  // Correção: mapeamento para Y
+        if (is_in_dead_zone(valor_y, 2048, 100)) {
+            posicao_alvo_y = HEIGHT / 2 - QUADRADO / 2;
         } else {
-            posicao_alvo_y = map_adc_to_screen(valor_y, 0, 4095, HEIGHT);  // Correção: mapeamento para Y
+            posicao_alvo_y = map_adc_to_screen(valor_y, 0, 4095, HEIGHT);
         }
         
         // Atualiza posições atuais
@@ -250,10 +218,10 @@ int main() {
         
         // Atualiza LEDs se ativos
         if (leds_ativos) {
-            uint16_t pwm_x = converter_adc_pwm(valor_x, joystick_cal.x_center, joystick_cal.dead_zone_x);  // Corrigido para X
-            uint16_t pwm_y = converter_adc_pwm(valor_y, joystick_cal.y_center, joystick_cal.dead_zone_y);  // Corrigido para Y
-            pwm_set_gpio_level(LED_PIN_RED, pwm_x);  // PWM para o eixo X
-            pwm_set_gpio_level(LED_PIN_BLUE, pwm_y);  // PWM para o eixo Y
+            uint16_t pwm_x = converter_adc_pwm(valor_x, 2048, 100);
+            uint16_t pwm_y = converter_adc_pwm(valor_y, 2048, 100);
+            pwm_set_gpio_level(LED_PIN_RED, pwm_x);
+            pwm_set_gpio_level(LED_PIN_BLUE, pwm_y);
         } else {
             pwm_set_gpio_level(LED_PIN_RED, 0);
             pwm_set_gpio_level(LED_PIN_BLUE, 0);
